@@ -432,4 +432,22 @@ describe('mongoose-lean-getters', function() {
       })
     );
   });
+
+  it('allows defaultLeanOptions to be set and overridden at call time (#33)', async() => {
+    const testSchema = new mongoose.Schema({
+      field: {
+        type: String,
+        get(val) { return `${val}-suffix`; },
+      }
+    });
+    testSchema.plugin(mongooseLeanGetters, { defaultLeanOptions: { getters: true } });
+
+    const TestModel = mongoose.model('gh-33', testSchema);
+    const entry = await TestModel.create({ field: 'value' });
+    const doc1 = await TestModel.findById(entry._id).lean();
+    assert.equal(doc1.field, 'value-suffix');
+
+    const doc2 = await TestModel.findById(entry._id).lean({ getters: false });
+    assert.equal(doc2.field, 'value');
+  });
 });
